@@ -364,6 +364,14 @@ public class FireworkAutofarm extends Module {
             }
         }
 
+        // Il crafting non puo' consegnare niente a inventario pieno.
+        if (state.ordinal() >= State.CRAFT_PAPER_OPEN.ordinal()
+            && state.ordinal() <= State.ROCKETS_CHECK.ordinal()
+            && inventarioPieno()) {
+            stopForzato("Inventario pieno: il crafting non ha dove mettere il risultato");
+            return;
+        }
+
         if (debugStati.get() && state != lastLoggedState) {
             lastLoggedState = state;
             ChatUtils.info("WGF", "stato: " + state.name());
@@ -1250,7 +1258,11 @@ public class FireworkAutofarm extends Module {
 
             // ==================== SELLALL ====================
             case SELLALL_IN_MANO:
-                if (!autoSell.get()) { state = State.END; break; }
+                if (!autoSell.get()) {
+                    warn("auto-sell e' spento: salto la vendita");
+                    state = State.END;
+                    break;
+                }
 
                 FindItemResult razzi = InvUtils.find(Items.FIREWORK_ROCKET);
                 if (!razzi.found()) {
@@ -1565,17 +1577,49 @@ public class FireworkAutofarm extends Module {
         return -1;
     }
 
+    /**
+     * Conta un item ovunque si trovi: inventario, cursore e griglia di crafting.
+     *
+     * La griglia conta: gli item spostati nelle caselle NON stanno piu'
+     * nell'inventario del giocatore. Senza guardarci, subito dopo aver riempito
+     * la griglia i controlli leggono zero e concludono che il materiale e'
+     * finito, mandando la sequenza a ricomprare all'infinito.
+     */
     private int countItem(Item item) {
         int count = 0;
+
         for (int i = 0; i < mc.player.getInventory().size(); i++) {
-            if (mc.player.getInventory().getStack(i).isOf(item)) {
-                count += mc.player.getInventory().getStack(i).getCount();
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (stack.isOf(item)) count += stack.getCount();
+        }
+
+        ScreenHandler handler = mc.player.currentScreenHandler;
+        if (handler != null) {
+            if (handler.getCursorStack().isOf(item)) count += handler.getCursorStack().getCount();
+
+            if (handler instanceof CraftingScreenHandler) {
+                for (int i = 1; i <= 9; i++) {
+                    ItemStack stack = handler.getSlot(i).getStack();
+                    if (stack.isOf(item)) count += stack.getCount();
+                }
             }
         }
-        if (mc.player.currentScreenHandler != null && mc.player.currentScreenHandler.getCursorStack().isOf(item)) {
-            count += mc.player.currentScreenHandler.getCursorStack().getCount();
-        }
+
         return count;
+    }
+
+    /**
+     * Vero quando tutti e 36 gli slot dell'inventario sono occupati.
+     *
+     * A inventario pieno lo shift-click sul risultato non ha dove mettere quello
+     * che produce: il crafting fallisce in silenzio, il conteggio non sale mai e
+     * la sequenza gira a vuoto per sempre.
+     */
+    private boolean inventarioPieno() {
+        for (int i = 0; i < 36; i++) {
+            if (mc.player.getInventory().getStack(i).isEmpty()) return false;
+        }
+        return true;
     }
 
     /**
