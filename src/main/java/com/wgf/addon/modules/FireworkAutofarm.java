@@ -143,6 +143,10 @@ public class FireworkAutofarm extends Module {
     // Crafting
     private final Setting<Integer> craftingRange = sgCraft.add(new IntSetting.Builder()
         .name("crafting-range").defaultValue(5).min(1).max(10).build());
+    private final Setting<Integer> raggioGlowstone = sgCraft.add(new IntSetting.Builder()
+        .name("raggio-glowstone")
+        .description("Distanza massima di piazzamento. Oltre 1 i drop cadono fuori dalla portata di raccolta")
+        .defaultValue(1).min(1).max(4).build());
 
     // Anti-Detection
     private final Setting<Boolean> enableJitter = sgAntiDetect.add(new BoolSetting.Builder()
@@ -980,7 +984,7 @@ public class FireworkAutofarm extends Module {
                 state = State.PLACE_GLOWSTONE_TICK;
                 break;
             case PLACE_GLOWSTONE_TICK:
-                if (glowstonePlaceIndex >= 32 || glowstonePlaceIndex >= glowstonePositions.size()) {
+                if (glowstonePlaceIndex >= glowstonePositions.size()) {
                     state = State.BREAK_GLOWSTONE_START;
                     break;
                 }
@@ -1026,8 +1030,16 @@ public class FireworkAutofarm extends Module {
                 waitTicks = randomMining.get() ? random.nextInt(3) + 1 : 1;
                 break;
             case BREAK_GLOWSTONE_COLLECT:
-                info("Glowstone Dust raccolta.");
-                state = State.CRAFT_PAPER_OPEN;
+                // I drop non sono istantanei: servono un po' di tick perche'
+                // gli item a terra vengano assorbiti dal giocatore.
+                info("Glowstone Dust: " + countItem(Items.GLOWSTONE_DUST));
+
+                if (countItem(Items.GLOWSTONE) > 0) {
+                    // Restano blocchi da consumare: altro giro di piazza e rompi.
+                    state = State.PLACE_GLOWSTONE_START;
+                } else {
+                    state = State.CRAFT_PAPER_OPEN;
+                }
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
 
@@ -1048,21 +1060,18 @@ public class FireworkAutofarm extends Module {
                 } else if (tickTimer++ > 60) shutdown("Timeout crafting");
                 break;
             case CRAFT_PAPER_FILL:
-                if (countItem(Items.SUGAR_CANE) < 66) {
+                if (countItem(Items.SUGAR_CANE) < 3) {
                     info("Sugar cane insufficiente, ritorno ad acquisto...");
                     sugarBought = 0;
-                    state = State.SHOP_SUGAR_CMD;
                     closeContainer();
+                    state = State.SHOP_SUGAR_CMD;
                     return;
                 }
-                ScreenHandler paperHandler = mc.player.currentScreenHandler;
-                int sugarSlot = findInInventory(Items.SUGAR_CANE);
-                if (sugarSlot == -1) { state = State.CRAFT_PAPER_BUY_MORE; return; }
-                for (int gridSlot = 1; gridSlot <= 9; gridSlot++) {
-                    if (paperHandler.getSlot(gridSlot).getStack().isEmpty()) {
-                        clickSlot(paperHandler, sugarSlot, 0, SlotActionType.QUICK_MOVE);
-                        break;
-                    }
+                // La carta vuole tre canne in fila: uno stack solo va diviso
+                // fra le tre caselle, altrimenti la prima se lo prende tutto.
+                if (!distribuisciNellaGriglia(Items.SUGAR_CANE, 1, 2, 3)) {
+                    state = State.CRAFT_PAPER_BUY_MORE;
+                    return;
                 }
                 state = State.CRAFT_PAPER_WAIT_CRAFT;
                 waitTicks = getJitteredDelay(actionDelay.get());
@@ -1106,9 +1115,7 @@ public class FireworkAutofarm extends Module {
                 break;
             case UNCRAFT_DIAMOND_FILL:
                 if (countItem(Items.DIAMOND_BLOCK) == 0) { state = State.UNCRAFT_DIAMOND_CHECK; return; }
-                int dbSlot = findInInventory(Items.DIAMOND_BLOCK);
-                if (dbSlot == -1) { state = State.UNCRAFT_DIAMOND_CHECK; return; }
-                clickSlot(mc.player.currentScreenHandler, dbSlot, 0, SlotActionType.QUICK_MOVE);
+                if (!fillCraftingSlot(Items.DIAMOND_BLOCK, 1)) { state = State.UNCRAFT_DIAMOND_CHECK; return; }
                 state = State.UNCRAFT_DIAMOND_WAIT_CRAFT;
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
@@ -1500,29 +1507,25 @@ public class FireworkAutofarm extends Module {
         return count;
     }
 
+    /**
+     * Posizioni dove piazzare la glowstone, tutte entro `raggio-glowstone`.
+     *
+     * Il raggio conta: un item lasciato cadere viene raccolto solo se resta a
+     * circa un blocco dal giocatore. Piazzando piu' lontano i blocchi vengono
+     * rotti ma la polvere resta a terra, e il modulo prosegue a mani vuote.
+     */
     private List<BlockPos> getGlowstonePlacementPositions() {
         List<BlockPos> list = new ArrayList<>();
         BlockPos center = mc.player.getBlockPos();
-        // Randomizza leggermente l'offset per evitare pattern identici
-        int offsetX = random.nextInt(2);
-        int offsetZ = random.nextInt(2);
-        for (int x = -3 + offsetX; x <= 3 + offsetX; x++) {
-            for (int z = -3 + offsetZ; z <= 3 + offsetZ; z++) {
-                if (x == 0 && z == 0) continue;
-                BlockPos pos = center.add(x, -1, z);
-                if (mc.world.getBlockState(pos).isAir()) {
-                    list.add(pos);
+        int raggio = raggioGlowstone.get();
+
+        for (int y = -1; y <= 0; y++) {
+            for (int x = -raggio; x <= raggio; x++) {
+                for (int z = -raggio; z <= raggio; z++) {
+                    if (x == 0 && z == 0) continue;
+                    BlockPos pos = center.add(x, y, z);
+                    if (mc.world.getBlockState(pos).isAir()) list.add(pos);
                 }
-                if (list.size() >= 32) return list;
-            }
-        }
-        for (int x = -3; x <= 3; x++) {
-            for (int z = -3; z <= 3; z++) {
-                BlockPos pos = center.add(x, 0, z);
-                if (mc.world.getBlockState(pos).isAir() && !pos.equals(center)) {
-                    list.add(pos);
-                }
-                if (list.size() >= 32) return list;
             }
         }
         return list;
@@ -1537,6 +1540,36 @@ public class FireworkAutofarm extends Module {
             }
         }
         return null;
+    }
+
+    /**
+     * Divide un solo stack in parti uguali fra piu' caselle della griglia.
+     *
+     * Serve per le ricette che vogliono lo stesso item in piu' caselle: con
+     * fillCraftingSlot la prima casella si prenderebbe tutto lo stack e per le
+     * altre non resterebbe niente. Il trascinamento col tasto sinistro
+     * (QUICK_CRAFT: inizio, una chiamata per casella, fine) e' il modo con cui
+     * il gioco stesso distribuisce uno stack in modo uniforme.
+     */
+    private boolean distribuisciNellaGriglia(Item item, int... gridSlots) {
+        if (!(mc.player.currentScreenHandler instanceof CraftingScreenHandler handler)) return false;
+
+        boolean giaPronte = true;
+        for (int gridSlot : gridSlots) {
+            if (!handler.getSlot(gridSlot).getStack().isOf(item)) giaPronte = false;
+        }
+        if (giaPronte) return true;
+
+        int invSlot = findInInventory(item);
+        if (invSlot == -1) return false;
+        int screenSlot = invSlot < 9 ? 37 + invSlot : 10 + (invSlot - 9);
+
+        clickSlot(handler, screenSlot, 0, SlotActionType.PICKUP);
+        clickSlot(handler, -999, 0, SlotActionType.QUICK_CRAFT);
+        for (int gridSlot : gridSlots) clickSlot(handler, gridSlot, 1, SlotActionType.QUICK_CRAFT);
+        clickSlot(handler, -999, 2, SlotActionType.QUICK_CRAFT);
+        clickSlot(handler, screenSlot, 0, SlotActionType.PICKUP);
+        return true;
     }
 
     private boolean fillCraftingSlot(Item item, int gridSlot) {
