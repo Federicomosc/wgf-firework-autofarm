@@ -81,6 +81,10 @@ public class FireworkAutofarm extends Module {
     private final Setting<Integer> guiTimeout = sgGeneral.add(new IntSetting.Builder()
         .name("gui-timeout").description("Tick massimi di attesa che la GUI si aggiorni prima di proseguire lo stesso")
         .defaultValue(60).min(10).sliderMax(200).build());
+    private final Setting<Boolean> autoTrovaItem = sgGeneral.add(new BoolSetting.Builder()
+        .name("auto-trova-item")
+        .description("Cerca l'item nella GUI invece di fidarsi del numero di slot configurato")
+        .defaultValue(true).build());
     private final Setting<Boolean> debugStati = sgGeneral.add(new BoolSetting.Builder()
         .name("debug-stati").description("Stampa in chat ogni passaggio di stato, per capire dove si blocca")
         .defaultValue(false).build());
@@ -387,7 +391,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_GLOWSTONE_SELECT:
-                clickContainerSlot(slotGlowstone.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotGlowstone, Items.GLOWSTONE, "Glowstone");
                 state = State.SHOP_GLOWSTONE_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -447,7 +451,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_DIAMOND_SELECT:
-                clickContainerSlot(slotDiamondBlock.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotDiamondBlock, Items.DIAMOND_BLOCK, "Blocco di diamante");
                 state = State.SHOP_DIAMOND_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -507,7 +511,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_GUNPOWDER_SELECT:
-                clickContainerSlot(slotGunpowder.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotGunpowder, Items.GUNPOWDER, "Polvere da sparo");
                 state = State.SHOP_GUNPOWDER_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -577,7 +581,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_FEATHER_SELECT:
-                clickContainerSlot(slotFeather.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotFeather, Items.FEATHER, "Piuma");
                 state = State.SHOP_FEATHER_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -637,7 +641,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_SUGAR_SELECT:
-                clickContainerSlot(slotSugarCane.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotSugarCane, Items.SUGAR_CANE, "Canna da zucchero");
                 state = State.SHOP_SUGAR_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -707,7 +711,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_CYAN_SELECT:
-                clickContainerSlot(slotCyanDye.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotCyanDye, Items.CYAN_DYE, "Colorante ciano");
                 state = State.SHOP_CYAN_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -766,7 +770,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_PURPLE_SELECT:
-                clickContainerSlot(slotPurpleDye.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotPurpleDye, Items.PURPLE_DYE, "Colorante viola");
                 state = State.SHOP_PURPLE_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -825,7 +829,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_BLACK_SELECT:
-                clickContainerSlot(slotBlackDye.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotBlackDye, Items.BLACK_DYE, "Colorante nero");
                 state = State.SHOP_BLACK_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -884,7 +888,7 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_GRAY_SELECT:
-                clickContainerSlot(slotGrayDye.get(), 0, SlotActionType.PICKUP);
+                clickItemSlot(slotGrayDye, Items.GRAY_DYE, "Colorante grigio");
                 state = State.SHOP_GRAY_WAIT_SELECT;
                 waitTicks = getJitteredDelay(guiWait.get());
                 break;
@@ -1251,6 +1255,36 @@ public class FireworkAutofarm extends Module {
         containerSig = containerSignature();
         guiUpdateTicks = 0;
         clickSlot(handler, slot, button, type);
+    }
+
+    /**
+     * Indice dello slot che contiene quell'item nella GUI aperta, -1 se assente.
+     * Le GUI degli shop usano l'item stesso come icona, quindi cercarlo e' molto
+     * piu' affidabile che fidarsi di un numero di slot fisso.
+     */
+    private int findSlotByItem(Item item) {
+        if (mc.player == null) return -1;
+        if (!(mc.currentScreen instanceof GenericContainerScreen screen)) return -1;
+
+        var slots = screen.getScreenHandler().slots;
+        for (int i = 0; i < slots.size(); i++) {
+            Slot slot = slots.get(i);
+            if (slot.inventory == mc.player.getInventory()) break;
+            if (slot.getStack().isOf(item)) return i;
+        }
+        return -1;
+    }
+
+    /** Clicca l'item cercandolo nella GUI; se non c'e' ripiega sullo slot configurato. */
+    private void clickItemSlot(Setting<Integer> slotConfigurato, Item item, String nome) {
+        int slot = autoTrovaItem.get() ? findSlotByItem(item) : -1;
+
+        if (slot < 0) {
+            slot = slotConfigurato.get();
+            if (autoTrovaItem.get()) warn(nome + " non trovato nella GUI, uso lo slot " + slot);
+        }
+
+        clickContainerSlot(slot, 0, SlotActionType.PICKUP);
     }
 
     /** Firma del contenuto del container aperto: item, quantita' e nome di ogni slot. */
