@@ -1,6 +1,7 @@
 package com.wgf.addon;
 
 import com.wgf.addon.modules.FireworkAutofarm;
+import com.wgf.addon.modules.ShopSlotDump;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
@@ -11,6 +12,7 @@ public class WgfAddon extends MeteorAddon {
     @Override
     public void onInitialize() {
         Modules.get().add(new FireworkAutofarm());
+        Modules.get().add(new ShopSlotDump());
     }
 
     @Override
