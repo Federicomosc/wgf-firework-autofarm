@@ -23,6 +23,10 @@ import net.minecraft.screen.slot.Slot;
  * di FireworkAutofarm quando il server ha un layout diverso da quello
  * per cui i default sono tarati. Attivalo, apri /shop, leggi la chat.
  *
+ * Il dump scatta a ogni cambio di contenuto, non solo all'apertura di una
+ * GUI nuova: cosi' vengono mappate anche le pagine successive e le
+ * schermate di acquisto, che il server riempie dopo averle aperte.
+ *
  * Gli slot dell'inventario del giocatore non vengono elencati: contano
  * solo quelli del contenitore, che sono anche gli unici cliccabili dal
  * modulo di autofarm.
@@ -43,8 +47,14 @@ public class ShopSlotDump extends Module {
         .defaultValue(false)
         .build());
 
-    /** syncId della GUI gia' stampata, per non ripetere il dump a ogni tick. */
-    private int lastSyncId = -1;
+    private final Setting<Boolean> saltaVuote = sgGeneral.add(new BoolSetting.Builder()
+        .name("salta-gui-vuote")
+        .description("Non stampare le GUI ancora vuote, che il server deve finire di riempire")
+        .defaultValue(true)
+        .build());
+
+    /** Contenuto gia' stampato, per non ripetere lo stesso dump a ogni tick. */
+    private String ultimoDump = null;
 
     public ShopSlotDump() {
         super(WgfAddon.CATEGORY, "shop-slot-dump", "Stampa in chat lo slot di ogni item della GUI aperta");
@@ -52,33 +62,36 @@ public class ShopSlotDump extends Module {
 
     @Override
     public void onActivate() {
-        lastSyncId = -1;
+        ultimoDump = null;
         ChatUtils.info("WGF", "Apri la GUI dello shop: la mappa degli slot compare qui.");
     }
 
     @EventHandler
     private void onTick(TickEvent.Post event) {
+        if (mc.player == null) return;
+
         if (!(mc.currentScreen instanceof GenericContainerScreen screen)) {
-            lastSyncId = -1;
+            ultimoDump = null;
             return;
         }
 
         ScreenHandler handler = screen.getScreenHandler();
-        if (handler.syncId == lastSyncId) return;
-        lastSyncId = handler.syncId;
+        String firma = firma(handler);
+        if (firma == null || firma.equals(ultimoDump)) return;
 
+        // Appena aperta, una GUI e' vuota finche' il server non la riempie:
+        // stamparla in quel momento darebbe "0 slot pieni" e basta.
+        if (saltaVuote.get() && contaPieni(handler) == 0) return;
+
+        ultimoDump = firma;
         dump(handler);
     }
 
     private void dump(ScreenHandler handler) {
-        if (mc.player == null) return;
-
         int pieni = 0;
 
         for (int i = 0; i < handler.slots.size(); i++) {
             Slot slot = handler.slots.get(i);
-
-            // gli slot del contenitore precedono sempre quelli del giocatore
             if (slot.inventory == mc.player.getInventory()) break;
 
             ItemStack stack = slot.getStack();
@@ -96,6 +109,29 @@ public class ShopSlotDump extends Module {
         }
 
         ChatUtils.info("WGF", "--- fine mappa: " + pieni + " slot pieni ---");
+    }
+
+    /** Quanti slot del contenitore hanno davvero un item dentro. */
+    private int contaPieni(ScreenHandler handler) {
+        int pieni = 0;
+        for (Slot slot : handler.slots) {
+            if (slot.inventory == mc.player.getInventory()) break;
+            if (!slot.getStack().isEmpty()) pieni++;
+        }
+        return pieni;
+    }
+
+    /** Firma del contenuto, per accorgersi quando la GUI cambia davvero. */
+    private String firma(ScreenHandler handler) {
+        StringBuilder sb = new StringBuilder();
+        for (Slot slot : handler.slots) {
+            if (slot.inventory == mc.player.getInventory()) break;
+            ItemStack stack = slot.getStack();
+            if (stack.isEmpty()) sb.append('-');
+            else sb.append(stack.getItem()).append(':').append(stack.getName().getString());
+            sb.append('|');
+        }
+        return sb.toString();
     }
 
     private void riga(int indice, String testo) {
