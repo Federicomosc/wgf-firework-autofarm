@@ -85,6 +85,9 @@ public class FireworkAutofarm extends Module {
         .name("auto-trova-item")
         .description("Cerca l'item nella GUI invece di fidarsi del numero di slot configurato")
         .defaultValue(true).build());
+    private final Setting<String> comandoVendita = sgGeneral.add(new StringSetting.Builder()
+        .name("comando-vendita").description("Comando usato per vendere i razzi tenuti in mano")
+        .defaultValue("/sellall hand").build());
     private final Setting<Integer> cicli = sgGeneral.add(new IntSetting.Builder()
         .name("cicli").description("Quanti giri completi fare prima di spegnersi. 0 = all'infinito")
         .defaultValue(0).min(0).sliderMax(50).build());
@@ -149,6 +152,12 @@ public class FireworkAutofarm extends Module {
     // Crafting
     private final Setting<Integer> craftingRange = sgCraft.add(new IntSetting.Builder()
         .name("crafting-range").defaultValue(5).min(1).max(10).build());
+    private final Setting<Integer> polverePerRazzo = sgCraft.add(new IntSetting.Builder()
+        .name("polvere-per-razzo").description("Polvere da sparo per razzo: e' la durata di volo (1, 2 o 3)")
+        .defaultValue(2).min(1).max(3).build());
+    private final Setting<Integer> stellePerRazzo = sgCraft.add(new IntSetting.Builder()
+        .name("stelle-per-razzo").description("Stelle per razzo. 0 fa razzi semplici, senza effetto")
+        .defaultValue(1).min(0).max(3).build());
     private final Setting<Integer> raggioGlowstone = sgCraft.add(new IntSetting.Builder()
         .name("raggio-glowstone")
         .description("Distanza massima di piazzamento. Oltre 1 i drop cadono fuori dalla portata di raccolta")
@@ -1208,10 +1217,17 @@ public class FireworkAutofarm extends Module {
 
             // ==================== CRAFT ROCKETS ====================
             case ROCKETS_FILL:
-                if (!fillCraftingSlot(Items.FIREWORK_STAR, 1)) { shutdown("Manca star"); return; }
-                if (!fillCraftingSlot(Items.GUNPOWDER, 2)) { shutdown("Manca gunpowder"); return; }
-                if (!fillCraftingSlot(Items.GUNPOWDER, 3)) { shutdown("Manca gunpowder"); return; }
-                if (!fillCraftingSlot(Items.PAPER, 4)) { shutdown("Manca paper"); return; }
+                // Ricetta senza forma: conta quanti ingredienti ci sono, non dove.
+                // La polvere da sparo decide la durata di volo, le stelle l'effetto.
+                int casellaRazzo = 1;
+
+                for (int i = 0; i < stellePerRazzo.get(); i++) {
+                    if (!fillCraftingSlot(Items.FIREWORK_STAR, casellaRazzo++)) { shutdown("Manca star"); return; }
+                }
+                for (int i = 0; i < polverePerRazzo.get(); i++) {
+                    if (!fillCraftingSlot(Items.GUNPOWDER, casellaRazzo++)) { shutdown("Manca gunpowder"); return; }
+                }
+                if (!fillCraftingSlot(Items.PAPER, casellaRazzo)) { shutdown("Manca paper"); return; }
                 state = State.ROCKETS_WAIT_CRAFT;
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
@@ -1221,6 +1237,7 @@ public class FireworkAutofarm extends Module {
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
             case ROCKETS_CHECK:
+                if (debugStati.get()) info("Razzi: " + countItem(Items.FIREWORK_ROCKET));
                 if (countItem(Items.FIREWORK_ROCKET) >= 64) {
                     info("Rockets completate (64).");
                     closeContainer();
@@ -1253,7 +1270,7 @@ public class FireworkAutofarm extends Module {
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
             case SELLALL_CMD:
-                sendCmd("/sellall hand");
+                sendCmd(comandoVendita.get());
                 state = State.SELLALL_WAIT;
                 waitTicks = getGaussianDelay(chatDelay.get());
                 break;
