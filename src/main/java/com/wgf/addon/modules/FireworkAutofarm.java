@@ -78,6 +78,12 @@ public class FireworkAutofarm extends Module {
         .name("auto-sell").description("Esegui /sellall hand").defaultValue(true).build());
     private final Setting<Boolean> chatFeedback = sgGeneral.add(new BoolSetting.Builder()
         .name("chat-feedback").description("Messaggi in chat").defaultValue(true).build());
+    private final Setting<Integer> guiTimeout = sgGeneral.add(new IntSetting.Builder()
+        .name("gui-timeout").description("Tick massimi di attesa che la GUI si aggiorni prima di proseguire lo stesso")
+        .defaultValue(60).min(10).sliderMax(200).build());
+    private final Setting<Boolean> debugStati = sgGeneral.add(new BoolSetting.Builder()
+        .name("debug-stati").description("Stampa in chat ogni passaggio di stato, per capire dove si blocca")
+        .defaultValue(false).build());
 
     // Shop Slots
     private final Setting<Integer> slotCatBlocchi = sgShop.add(new IntSetting.Builder()
@@ -209,6 +215,7 @@ public class FireworkAutofarm extends Module {
     private String containerSig = null;
     /** Tick passati dall'ultimo click in attesa che la GUI cambi davvero. */
     private int guiUpdateTicks = 0;
+    private State lastLoggedState = null;
 
     public FireworkAutofarm() {
         super(WgfAddon.CATEGORY, "firework-autofarm", "WGF Firework Autofarm - Anti-Vulcan");
@@ -319,6 +326,11 @@ public class FireworkAutofarm extends Module {
             }
         }
 
+        if (debugStati.get() && state != lastLoggedState) {
+            lastLoggedState = state;
+            ChatUtils.info("WGF", "stato: " + state.name());
+        }
+
         switch (state) {
             case WAIT_START:
                 tickTimer++;
@@ -350,7 +362,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GLOWSTONE_PAGE1;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GLOWSTONE_PAGE1:
                 clickContainerSlot(slotNextPage.get(), 0, SlotActionType.PICKUP);
@@ -361,7 +373,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GLOWSTONE_PAGE2;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GLOWSTONE_PAGE2:
                 clickContainerSlot(slotNextPage.get(), 0, SlotActionType.PICKUP);
@@ -372,7 +384,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GLOWSTONE_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GLOWSTONE_SELECT:
                 clickContainerSlot(slotGlowstone.get(), 0, SlotActionType.PICKUP);
@@ -383,7 +395,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GLOWSTONE_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GLOWSTONE_QTY:
                 clickContainerSlot(slotQty32.get(), 0, SlotActionType.PICKUP);
@@ -394,7 +406,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GLOWSTONE_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GLOWSTONE_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -432,7 +444,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_DIAMOND_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_DIAMOND_SELECT:
                 clickContainerSlot(slotDiamondBlock.get(), 0, SlotActionType.PICKUP);
@@ -443,7 +455,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_DIAMOND_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_DIAMOND_QTY:
                 clickContainerSlot(slotQty8.get(), 0, SlotActionType.PICKUP);
@@ -454,7 +466,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_DIAMOND_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_DIAMOND_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -492,7 +504,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GUNPOWDER_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GUNPOWDER_SELECT:
                 clickContainerSlot(slotGunpowder.get(), 0, SlotActionType.PICKUP);
@@ -503,7 +515,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GUNPOWDER_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GUNPOWDER_QTY:
                 clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
@@ -514,7 +526,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GUNPOWDER_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GUNPOWDER_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -562,7 +574,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_FEATHER_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_FEATHER_SELECT:
                 clickContainerSlot(slotFeather.get(), 0, SlotActionType.PICKUP);
@@ -573,7 +585,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_FEATHER_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_FEATHER_QTY:
                 clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
@@ -584,7 +596,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_FEATHER_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_FEATHER_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -622,7 +634,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_SUGAR_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_SUGAR_SELECT:
                 clickContainerSlot(slotSugarCane.get(), 0, SlotActionType.PICKUP);
@@ -633,7 +645,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_SUGAR_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_SUGAR_QTY:
                 clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
@@ -644,7 +656,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_SUGAR_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_SUGAR_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -692,7 +704,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_CYAN_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_CYAN_SELECT:
                 clickContainerSlot(slotCyanDye.get(), 0, SlotActionType.PICKUP);
@@ -703,7 +715,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_CYAN_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_CYAN_QTY:
                 clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
@@ -714,7 +726,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_CYAN_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_CYAN_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -751,7 +763,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_PURPLE_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_PURPLE_SELECT:
                 clickContainerSlot(slotPurpleDye.get(), 0, SlotActionType.PICKUP);
@@ -762,7 +774,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_PURPLE_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_PURPLE_QTY:
                 clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
@@ -773,7 +785,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_PURPLE_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_PURPLE_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -810,7 +822,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_BLACK_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_BLACK_SELECT:
                 clickContainerSlot(slotBlackDye.get(), 0, SlotActionType.PICKUP);
@@ -821,7 +833,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_BLACK_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_BLACK_QTY:
                 clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
@@ -832,7 +844,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_BLACK_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_BLACK_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -869,7 +881,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GRAY_SELECT;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GRAY_SELECT:
                 clickContainerSlot(slotGrayDye.get(), 0, SlotActionType.PICKUP);
@@ -880,7 +892,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GRAY_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GRAY_QTY:
                 clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
@@ -891,7 +903,7 @@ public class FireworkAutofarm extends Module {
                 if (isContainerUpdated()) {
                     state = State.SHOP_GRAY_CONFIRM;
                     waitTicks = getJitteredDelay(actionDelay.get());
-                } else if (guiUpdateTicks++ > 100) { shutdown("Timeout aggiornamento GUI shop"); }
+                }
                 break;
             case SHOP_GRAY_CONFIRM:
                 clickContainerSlot(slotConfirmBuy.get(), 0, SlotActionType.PICKUP);
@@ -1271,8 +1283,21 @@ public class FireworkAutofarm extends Module {
     private boolean isContainerUpdated() {
         if (!isContainerOpen()) return false;
         if (containerSig == null) return true;
+
         String now = containerSignature();
-        return now != null && !now.equals(containerSig);
+        if (now != null && !now.equals(containerSig)) return true;
+
+        // Se il server non aggiorna la GUI entro il timeout si prosegue lo stesso:
+        // meglio un click potenzialmente sbagliato che restare fermi per sempre.
+        // L'avviso non passa da warn() perche' deve vedersi anche con
+        // chat-feedback disattivato.
+        if (guiUpdateTicks++ > guiTimeout.get()) {
+            ChatUtils.warning("WGF", "GUI non aggiornata entro " + guiTimeout.get() + " tick: proseguo comunque");
+            containerSig = null;
+            return true;
+        }
+
+        return false;
     }
 
     private void clickSlot(ScreenHandler handler, int slot, int button, SlotActionType type) {
