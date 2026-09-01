@@ -214,7 +214,7 @@ public class FireworkAutofarm extends Module {
         STARS_OPEN, STARS_WAIT_OPEN, STARS_FILL, STARS_WAIT_CRAFT, STARS_CHECK,
         STARS_FADE_FILL, STARS_FADE_WAIT_CRAFT, STARS_FADE_CHECK,
         ROCKETS_FILL, ROCKETS_WAIT_CRAFT, ROCKETS_CHECK,
-        SELLALL_CMD, SELLALL_WAIT, END
+        SELLALL_IN_MANO, SELLALL_CMD, SELLALL_WAIT, END
     }
 
     private State state = State.IDLE;
@@ -235,6 +235,7 @@ public class FireworkAutofarm extends Module {
     /** Tick passati dall'ultimo click in attesa che la GUI cambi davvero. */
     private int guiUpdateTicks = 0;
     private int qtyClick = 0;
+    private int razziPrimaDiVendere = 0;
     private State lastLoggedState = null;
 
     public FireworkAutofarm() {
@@ -1215,7 +1216,7 @@ public class FireworkAutofarm extends Module {
                 if (countItem(Items.FIREWORK_ROCKET) >= 64) {
                     info("Rockets completate (64).");
                     closeContainer();
-                    state = State.SELLALL_CMD;
+                    state = State.SELLALL_IN_MANO;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 } else {
                     state = State.ROCKETS_FILL;
@@ -1223,18 +1224,43 @@ public class FireworkAutofarm extends Module {
                 break;
 
             // ==================== SELLALL ====================
-            case SELLALL_CMD:
-                if (autoSell.get()) {
-                    sendCmd("/sellall hand");
-                    state = State.SELLALL_WAIT;
-                    waitTicks = getGaussianDelay(chatDelay.get());
-                } else {
+            case SELLALL_IN_MANO:
+                if (!autoSell.get()) { state = State.END; break; }
+
+                FindItemResult razzi = InvUtils.find(Items.FIREWORK_ROCKET);
+                if (!razzi.found()) {
+                    info("Niente razzi da vendere.");
                     state = State.END;
+                    break;
                 }
+
+                razziPrimaDiVendere = countItem(Items.FIREWORK_ROCKET);
+
+                // /sellall hand vende quello che si tiene in mano: senza questo
+                // passaggio si vende qualunque cosa fosse rimasta selezionata.
+                if (razzi.isHotbar()) InvUtils.swap(razzi.slot(), false);
+                else InvUtils.move().from(razzi.slot()).toHotbar(mc.player.getInventory().selectedSlot);
+
+                state = State.SELLALL_CMD;
+                waitTicks = getJitteredDelay(actionDelay.get());
+                break;
+            case SELLALL_CMD:
+                sendCmd("/sellall hand");
+                state = State.SELLALL_WAIT;
+                waitTicks = getGaussianDelay(chatDelay.get());
                 break;
             case SELLALL_WAIT:
-                info("Vendita completata.");
-                state = State.END;
+                int razziRimasti = countItem(Items.FIREWORK_ROCKET);
+                info("Venduti " + (razziPrimaDiVendere - razziRimasti) + " razzi, ne restano " + razziRimasti);
+
+                if (razziRimasti > 0 && razziRimasti < razziPrimaDiVendere) {
+                    // Molti shop vendono uno stack per volta: si ripete finche' cala.
+                    state = State.SELLALL_IN_MANO;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    if (razziRimasti > 0) warn("La vendita non ha tolto niente, mi fermo qui");
+                    state = State.END;
+                }
                 break;
 
             case END:

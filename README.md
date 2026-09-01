@@ -9,7 +9,7 @@ la polvere, crafta stelle e razzi, e vende con `/sellall hand`.
 | Minecraft | 1.19.2 |
 | Fabric Loader | >= 0.14.0 |
 | Meteor Client | 0.5.1 |
-| Versione mod | 1.7.0 |
+| Versione mod | 1.8.0 |
 
 In gioco il modulo compare in Meteor nella categoria **WGF**, con due voci:
 `firework-autofarm` (la farm) e `shop-slot-dump` (strumento per mappare lo shop).
@@ -44,7 +44,7 @@ Nel launcher: **Installazioni** → il profilo `fabric-loader-*-1.19.2` → **�
 ### 1.3 Scarica i due JAR
 
 ```powershell
-$m = "C:\minecraft-1.19.2\mods"; New-Item -ItemType Directory -Force -Path $m | Out-Null; curl.exe -L -o "$m\meteor-client-0.5.1.jar" "https://raw.githubusercontent.com/Federicomosc/wgf-firework-autofarm/main/libs/meteor-client-0.5.1.jar"; curl.exe -L -o "$m\wgf-firework-autofarm-1.7.0.jar" "https://raw.githubusercontent.com/Federicomosc/wgf-firework-autofarm/main/build/libs/wgf-firework-autofarm-1.7.0.jar"
+$m = "C:\minecraft-1.19.2\mods"; New-Item -ItemType Directory -Force -Path $m | Out-Null; curl.exe -L -o "$m\meteor-client-0.5.1.jar" "https://raw.githubusercontent.com/Federicomosc/wgf-firework-autofarm/main/libs/meteor-client-0.5.1.jar"; curl.exe -L -o "$m\wgf-firework-autofarm-1.8.0.jar" "https://raw.githubusercontent.com/Federicomosc/wgf-firework-autofarm/main/build/libs/wgf-firework-autofarm-1.8.0.jar"
 ```
 
 Fabric API **non** serve: Meteor non lo richiede.
@@ -59,7 +59,7 @@ Devono esserci **due** file, con queste dimensioni esatte:
 
 ```
 meteor-client-0.5.1.jar          4913002
-wgf-firework-autofarm-1.7.0.jar    33670
+wgf-firework-autofarm-1.8.0.jar    34239
 ```
 
 Se una dimensione non corrisponde hai scaricato una pagina di errore invece del JAR:
@@ -80,7 +80,7 @@ Con **Minecraft chiuso**, altrimenti il vecchio JAR è bloccato e la cancellazio
 fallisce in silenzio:
 
 ```powershell
-$m = "C:\minecraft-1.19.2\mods"; Remove-Item "$m\wgf-firework-autofarm-*.jar" -Force -ErrorAction SilentlyContinue; curl.exe -L -o "$m\wgf-firework-autofarm-1.7.0.jar" "https://raw.githubusercontent.com/Federicomosc/wgf-firework-autofarm/main/build/libs/wgf-firework-autofarm-1.7.0.jar"
+$m = "C:\minecraft-1.19.2\mods"; Remove-Item "$m\wgf-firework-autofarm-*.jar" -Force -ErrorAction SilentlyContinue; curl.exe -L -o "$m\wgf-firework-autofarm-1.8.0.jar" "https://raw.githubusercontent.com/Federicomosc/wgf-firework-autofarm/main/build/libs/wgf-firework-autofarm-1.8.0.jar"
 ```
 
 Nel repo resta solo il JAR della versione corrente: i link alle versioni vecchie danno 404.
@@ -106,7 +106,7 @@ ogni riga per rileggere i default nuovi.
 | `gui-timeout` | 60 | oltre questo si prosegue lo stesso, avvisando |
 | `auto-trova-item` | ON | cerca l'item nella GUI invece di fidarsi del numero di slot |
 | `debug-stati` | ON | stampa ogni passaggio di stato: tienilo acceso finché non funziona tutto |
-| `auto-sell` | OFF | accendilo solo quando il resto gira |
+| `auto-sell` | OFF | accendilo solo quando il resto gira: mette i razzi in mano e li vende |
 | `chat-feedback` | ON | senza, non vedi nessun messaggio |
 
 **Crafting**
@@ -181,7 +181,8 @@ Dopo `start-delay` la sequenza parte e scrive in chat cosa sta facendo.
    ripetendo finché ne resta
 3. Alla crafting table: carta dalla canna da zucchero, diamanti dal blocco,
    stelle, stelle con dissolvenza, razzi
-4. `/sellall hand` (solo con `auto-sell` acceso)
+4. Mette i razzi in mano e li vende con `/sellall hand`, ripetendo finche' ne restano
+   (solo con `auto-sell` acceso)
 
 ---
 
