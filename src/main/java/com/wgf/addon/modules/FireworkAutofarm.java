@@ -91,41 +91,52 @@ public class FireworkAutofarm extends Module {
 
     // Shop Slots
     private final Setting<Integer> slotCatBlocchi = sgShop.add(new IntSetting.Builder()
-        .name("slot-cat-blocchi").defaultValue(10).min(0).max(53).build());
+        .name("slot-cat-blocchi").defaultValue(19).min(0).max(53).build());
     private final Setting<Integer> slotCatMinerali = sgShop.add(new IntSetting.Builder()
-        .name("slot-cat-minerali").defaultValue(11).min(0).max(53).build());
+        .name("slot-cat-minerali").defaultValue(13).min(0).max(53).build());
     private final Setting<Integer> slotCatMobs = sgShop.add(new IntSetting.Builder()
-        .name("slot-cat-mobs").defaultValue(12).min(0).max(53).build());
+        .name("slot-cat-mobs").defaultValue(21).min(0).max(53).build());
     private final Setting<Integer> slotCatAgricoltura = sgShop.add(new IntSetting.Builder()
-        .name("slot-cat-agricoltura").defaultValue(13).min(0).max(53).build());
+        .name("slot-cat-agricoltura").defaultValue(20).min(0).max(53).build());
     private final Setting<Integer> slotCatColoranti = sgShop.add(new IntSetting.Builder()
-        .name("slot-cat-coloranti").defaultValue(14).min(0).max(53).build());
+        .name("slot-cat-coloranti").defaultValue(23).min(0).max(53).build());
     private final Setting<Integer> slotNextPage = sgShop.add(new IntSetting.Builder()
-        .name("slot-next-page").defaultValue(50).min(0).max(53).build());
+        .name("slot-next-page").defaultValue(14).min(0).max(53).build());
     private final Setting<Integer> slotGlowstone = sgShop.add(new IntSetting.Builder()
-        .name("slot-glowstone").defaultValue(13).min(0).max(53).build());
+        .name("slot-glowstone").defaultValue(6).min(0).max(53).build());
     private final Setting<Integer> slotDiamondBlock = sgShop.add(new IntSetting.Builder()
-        .name("slot-diamond-block").defaultValue(13).min(0).max(53).build());
+        .name("slot-diamond-block").defaultValue(8).min(0).max(53).build());
     private final Setting<Integer> slotGunpowder = sgShop.add(new IntSetting.Builder()
-        .name("slot-gunpowder").defaultValue(13).min(0).max(53).build());
+        .name("slot-gunpowder").defaultValue(8).min(0).max(53).build());
     private final Setting<Integer> slotFeather = sgShop.add(new IntSetting.Builder()
-        .name("slot-feather").defaultValue(14).min(0).max(53).build());
+        .name("slot-feather").defaultValue(5).min(0).max(53).build());
     private final Setting<Integer> slotSugarCane = sgShop.add(new IntSetting.Builder()
-        .name("slot-sugar-cane").defaultValue(13).min(0).max(53).build());
+        .name("slot-sugar-cane").defaultValue(18).min(0).max(53).build());
     private final Setting<Integer> slotCyanDye = sgShop.add(new IntSetting.Builder()
-        .name("slot-cyan-dye").defaultValue(10).min(0).max(53).build());
+        .name("slot-cyan-dye").defaultValue(3).min(0).max(53).build());
     private final Setting<Integer> slotPurpleDye = sgShop.add(new IntSetting.Builder()
-        .name("slot-purple-dye").defaultValue(11).min(0).max(53).build());
+        .name("slot-purple-dye").defaultValue(12).min(0).max(53).build());
     private final Setting<Integer> slotBlackDye = sgShop.add(new IntSetting.Builder()
-        .name("slot-black-dye").defaultValue(12).min(0).max(53).build());
+        .name("slot-black-dye").defaultValue(0).min(0).max(53).build());
     private final Setting<Integer> slotGrayDye = sgShop.add(new IntSetting.Builder()
-        .name("slot-gray-dye").defaultValue(13).min(0).max(53).build());
-    private final Setting<Integer> slotQty32 = sgShop.add(new IntSetting.Builder()
-        .name("slot-qty-32").defaultValue(31).min(0).max(53).build());
-    private final Setting<Integer> slotQty64 = sgShop.add(new IntSetting.Builder()
-        .name("slot-qty-64").defaultValue(32).min(0).max(53).build());
-    private final Setting<Integer> slotQty8 = sgShop.add(new IntSetting.Builder()
-        .name("slot-qty-8").defaultValue(16).min(0).max(53).build());
+        .name("slot-gray-dye").defaultValue(4).min(0).max(53).build());
+    // La schermata di acquisto non ha pulsanti "compra N": ha un contatore che
+    // parte da 1 e si regola a colpi di +1/+16/+32 e -1/-16/-32.
+    private final Setting<Integer> slotQtyItem = sgShop.add(new IntSetting.Builder()
+        .name("slot-qty-item").description("Slot dell'item nella schermata di acquisto: la sua quantita' e' il contatore")
+        .defaultValue(22).min(0).max(53).build());
+    private final Setting<Integer> slotQtyPiu1 = sgShop.add(new IntSetting.Builder()
+        .name("slot-qty-piu-1").defaultValue(23).min(0).max(53).build());
+    private final Setting<Integer> slotQtyPiu16 = sgShop.add(new IntSetting.Builder()
+        .name("slot-qty-piu-16").defaultValue(24).min(0).max(53).build());
+    private final Setting<Integer> slotQtyPiu32 = sgShop.add(new IntSetting.Builder()
+        .name("slot-qty-piu-32").defaultValue(25).min(0).max(53).build());
+    private final Setting<Integer> slotQtyMeno1 = sgShop.add(new IntSetting.Builder()
+        .name("slot-qty-meno-1").defaultValue(21).min(0).max(53).build());
+    private final Setting<Integer> slotQtyMeno16 = sgShop.add(new IntSetting.Builder()
+        .name("slot-qty-meno-16").defaultValue(20).min(0).max(53).build());
+    private final Setting<Integer> slotQtyMeno32 = sgShop.add(new IntSetting.Builder()
+        .name("slot-qty-meno-32").defaultValue(19).min(0).max(53).build());
     private final Setting<Integer> slotConfirmBuy = sgShop.add(new IntSetting.Builder()
         .name("slot-confirm-buy").defaultValue(13).min(0).max(53).build());
 
@@ -219,6 +230,7 @@ public class FireworkAutofarm extends Module {
     private String containerSig = null;
     /** Tick passati dall'ultimo click in attesa che la GUI cambi davvero. */
     private int guiUpdateTicks = 0;
+    private int qtyClick = 0;
     private State lastLoggedState = null;
 
     public FireworkAutofarm() {
@@ -234,7 +246,7 @@ public class FireworkAutofarm extends Module {
         glowstonePositions.clear();
         currentBreakPos = null;
         flagged = false; consecutiveFlags = 0;
-        containerSig = null; guiUpdateTicks = 0;
+        containerSig = null; guiUpdateTicks = 0; qtyClick = 0;
         lastPos = null;
         if (mc.player != null) lastPos = mc.player.getPos();
         info("Anti-Vulcan attivo. Jitter: " + enableJitter.get() + " | Auto-shutdown: " + autoShutdown.get());
@@ -402,13 +414,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_GLOWSTONE_QTY:
-                clickContainerSlot(slotQty32.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_GLOWSTONE_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(32)) {
+                    state = State.SHOP_GLOWSTONE_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_GLOWSTONE_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_GLOWSTONE_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_GLOWSTONE_CONFIRM;
+                    state = State.SHOP_GLOWSTONE_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -462,13 +478,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_DIAMOND_QTY:
-                clickContainerSlot(slotQty8.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_DIAMOND_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(8)) {
+                    state = State.SHOP_DIAMOND_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_DIAMOND_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_DIAMOND_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_DIAMOND_CONFIRM;
+                    state = State.SHOP_DIAMOND_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -522,13 +542,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_GUNPOWDER_QTY:
-                clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_GUNPOWDER_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(64)) {
+                    state = State.SHOP_GUNPOWDER_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_GUNPOWDER_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_GUNPOWDER_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_GUNPOWDER_CONFIRM;
+                    state = State.SHOP_GUNPOWDER_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -592,13 +616,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_FEATHER_QTY:
-                clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_FEATHER_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(64)) {
+                    state = State.SHOP_FEATHER_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_FEATHER_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_FEATHER_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_FEATHER_CONFIRM;
+                    state = State.SHOP_FEATHER_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -652,13 +680,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_SUGAR_QTY:
-                clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_SUGAR_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(64)) {
+                    state = State.SHOP_SUGAR_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_SUGAR_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_SUGAR_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_SUGAR_CONFIRM;
+                    state = State.SHOP_SUGAR_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -722,13 +754,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_CYAN_QTY:
-                clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_CYAN_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(64)) {
+                    state = State.SHOP_CYAN_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_CYAN_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_CYAN_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_CYAN_CONFIRM;
+                    state = State.SHOP_CYAN_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -781,13 +817,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_PURPLE_QTY:
-                clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_PURPLE_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(64)) {
+                    state = State.SHOP_PURPLE_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_PURPLE_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_PURPLE_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_PURPLE_CONFIRM;
+                    state = State.SHOP_PURPLE_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -840,13 +880,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_BLACK_QTY:
-                clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_BLACK_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(64)) {
+                    state = State.SHOP_BLACK_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_BLACK_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_BLACK_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_BLACK_CONFIRM;
+                    state = State.SHOP_BLACK_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -899,13 +943,17 @@ public class FireworkAutofarm extends Module {
                 }
                 break;
             case SHOP_GRAY_QTY:
-                clickContainerSlot(slotQty64.get(), 0, SlotActionType.PICKUP);
-                state = State.SHOP_GRAY_WAIT_QTY;
-                waitTicks = getJitteredDelay(guiWait.get());
+                if (regolaQuantita(64)) {
+                    state = State.SHOP_GRAY_CONFIRM;
+                    waitTicks = getJitteredDelay(actionDelay.get());
+                } else {
+                    state = State.SHOP_GRAY_WAIT_QTY;
+                    waitTicks = getJitteredDelay(guiWait.get());
+                }
                 break;
             case SHOP_GRAY_WAIT_QTY:
                 if (isContainerUpdated()) {
-                    state = State.SHOP_GRAY_CONFIRM;
+                    state = State.SHOP_GRAY_QTY;
                     waitTicks = getJitteredDelay(actionDelay.get());
                 }
                 break;
@@ -1285,6 +1333,90 @@ public class FireworkAutofarm extends Module {
         }
 
         clickContainerSlot(slot, 0, SlotActionType.PICKUP);
+    }
+
+    /**
+     * Porta il contatore della schermata di acquisto sulla quantita' voluta.
+     *
+     * Lo shop non ha pulsanti "compra N": la quantita' parte da 1 e si regola
+     * con +1/+16/+32 e -1/-16/-32. I pulsanti che sforerebbero il massimo
+     * spariscono dalla GUI, quindi si considerano solo quelli davvero presenti
+     * e ogni giro si sceglie quello che avvicina di piu' al bersaglio, anche
+     * superandolo: da 1 a 32 conviene +32 e poi -1, due click invece di 31.
+     *
+     * @return true quando la quantita' e' gia' giusta e si puo' confermare,
+     *         false dopo aver cliccato un pulsante (serve un altro giro)
+     */
+    private boolean regolaQuantita(int bersaglio) {
+        int attuale = quantitaAttuale();
+
+        // Quantita' non leggibile: si prosegue e si conferma, come prima.
+        if (attuale < 0) { qtyClick = 0; return true; }
+        if (attuale == bersaglio) { qtyClick = 0; return true; }
+
+        if (++qtyClick > 80) {
+            stopForzato("Non riesco a impostare la quantita' " + bersaglio + ", fermo a " + attuale);
+            return false;
+        }
+
+        int[][] pulsanti = {
+            {  32, slotQtyPiu32.get()  }, {  16, slotQtyPiu16.get()  }, {  1, slotQtyPiu1.get()  },
+            {  -1, slotQtyMeno1.get()  }, { -16, slotQtyMeno16.get() }, { -32, slotQtyMeno32.get() },
+        };
+
+        int miglioreSlot = -1;
+        int miglioreDistanza = Math.abs(bersaglio - attuale);
+
+        for (int[] pulsante : pulsanti) {
+            if (!slotPieno(pulsante[1])) continue;   // pulsante nascosto dal server
+            int distanza = Math.abs(bersaglio - (attuale + pulsante[0]));
+            if (distanza < miglioreDistanza) {
+                miglioreDistanza = distanza;
+                miglioreSlot = pulsante[1];
+            }
+        }
+
+        if (miglioreSlot < 0) {
+            stopForzato("Nessun pulsante utile per arrivare a " + bersaglio + ", fermo a " + attuale);
+            return false;
+        }
+
+        clickContainerSlot(miglioreSlot, 0, SlotActionType.PICKUP);
+        return false;
+    }
+
+    /** Quantita' scelta, letta dalla dimensione dello stack dell'item in vendita. */
+    private int quantitaAttuale() {
+        ItemStack stack = stackInSlot(slotQtyItem.get());
+        return stack == null || stack.isEmpty() ? -1 : stack.getCount();
+    }
+
+    private boolean slotPieno(int indice) {
+        ItemStack stack = stackInSlot(indice);
+        return stack != null && !stack.isEmpty();
+    }
+
+    private ItemStack stackInSlot(int indice) {
+        if (mc.player == null) return null;
+        if (!(mc.currentScreen instanceof GenericContainerScreen screen)) return null;
+
+        var slots = screen.getScreenHandler().slots;
+        if (indice < 0 || indice >= slots.size()) return null;
+
+        Slot slot = slots.get(indice);
+        if (slot.inventory == mc.player.getInventory()) return null;
+        return slot.getStack();
+    }
+
+    /**
+     * Ferma la sequenza per un errore da cui non si torna indietro.
+     * Non passa da shutdown(), che con auto-shutdown disattivato non farebbe
+     * nulla e lascerebbe il modulo a girare a vuoto.
+     */
+    private void stopForzato(String motivo) {
+        ChatUtils.error("WGF", "STOP: " + motivo);
+        state = State.IDLE;
+        if (isActive()) toggle();
     }
 
     /** Firma del contenuto del container aperto: item, quantita' e nome di ogni slot. */
