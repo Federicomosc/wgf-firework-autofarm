@@ -94,6 +94,10 @@ public class FireworkAutofarm extends Module {
     private final Setting<Integer> pausaTraCicli = sgGeneral.add(new IntSetting.Builder()
         .name("pausa-tra-cicli").description("Tick di attesa fra un giro e il successivo")
         .defaultValue(100).min(0).sliderMax(1200).build());
+    private final Setting<Boolean> debugCraft = sgGeneral.add(new BoolSetting.Builder()
+        .name("debug-craft")
+        .description("Prima di ogni craft stampa griglia e risultato: serve a capire se la ricetta e' valida")
+        .defaultValue(false).build());
     private final Setting<Boolean> debugStati = sgGeneral.add(new BoolSetting.Builder()
         .name("debug-stati").description("Stampa in chat ogni passaggio di stato, per capire dove si blocca")
         .defaultValue(false).build());
@@ -1104,6 +1108,7 @@ public class FireworkAutofarm extends Module {
                 break;
             case CRAFT_PAPER_WAIT_CRAFT:
                 if (mc.player.currentScreenHandler instanceof CraftingScreenHandler) {
+                    logCraft(state.name());
                     clickSlot(mc.player.currentScreenHandler, 0, 0, SlotActionType.QUICK_MOVE);
                 }
                 state = State.CRAFT_PAPER_CHECK;
@@ -1146,6 +1151,7 @@ public class FireworkAutofarm extends Module {
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
             case UNCRAFT_DIAMOND_WAIT_CRAFT:
+                logCraft(state.name());
                 clickSlot(mc.player.currentScreenHandler, 0, 0, SlotActionType.QUICK_MOVE);
                 state = State.UNCRAFT_DIAMOND_CHECK;
                 waitTicks = getJitteredDelay(actionDelay.get());
@@ -1186,6 +1192,7 @@ public class FireworkAutofarm extends Module {
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
             case STARS_WAIT_CRAFT:
+                logCraft(state.name());
                 clickSlot(mc.player.currentScreenHandler, 0, 0, SlotActionType.QUICK_MOVE);
                 state = State.STARS_CHECK;
                 waitTicks = getJitteredDelay(actionDelay.get());
@@ -1209,6 +1216,7 @@ public class FireworkAutofarm extends Module {
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
             case STARS_FADE_WAIT_CRAFT:
+                logCraft(state.name());
                 clickSlot(mc.player.currentScreenHandler, 0, 0, SlotActionType.QUICK_MOVE);
                 state = State.STARS_FADE_CHECK;
                 waitTicks = getJitteredDelay(actionDelay.get());
@@ -1240,6 +1248,7 @@ public class FireworkAutofarm extends Module {
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
             case ROCKETS_WAIT_CRAFT:
+                logCraft(state.name());
                 clickSlot(mc.player.currentScreenHandler, 0, 0, SlotActionType.QUICK_MOVE);
                 state = State.ROCKETS_CHECK;
                 waitTicks = getJitteredDelay(actionDelay.get());
@@ -1473,6 +1482,36 @@ public class FireworkAutofarm extends Module {
 
         clickContainerSlot(miglioreSlot, 0, SlotActionType.PICKUP);
         return false;
+    }
+
+    /**
+     * Fotografa la griglia di crafting e il risultato.
+     *
+     * E' la diagnosi decisiva quando un craft non riesce: se il risultato e'
+     * VUOTO la ricetta non e' valida (ingredienti sbagliati o mancanti), se
+     * invece contiene qualcosa ma il conteggio non sale, allora e' la consegna
+     * a fallire, di solito per inventario pieno.
+     */
+    private void logCraft(String fase) {
+        if (!debugCraft.get()) return;
+
+        if (!(mc.player.currentScreenHandler instanceof CraftingScreenHandler handler)) {
+            ChatUtils.info("WGF", fase + ": nessuna schermata di crafting aperta");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder(fase + " |");
+        for (int i = 1; i <= 9; i++) {
+            ItemStack stack = handler.getSlot(i).getStack();
+            sb.append(' ').append(i).append('=')
+              .append(stack.isEmpty() ? "-" : stack.getName().getString() + "x" + stack.getCount());
+        }
+
+        ItemStack risultato = handler.getSlot(0).getStack();
+        sb.append(" | RISULTATO: ")
+          .append(risultato.isEmpty() ? "VUOTO" : risultato.getName().getString() + "x" + risultato.getCount());
+
+        ChatUtils.info("WGF", sb.toString().replace("%", "%%"));
     }
 
     /** Quantita' scelta, letta dalla dimensione dello stack dell'item in vendita. */
