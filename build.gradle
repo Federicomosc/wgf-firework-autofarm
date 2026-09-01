@@ -22,11 +22,12 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     // Meteor Client - JAR locale (metti meteor-client-0.5.1.jar nella cartella libs/)
-    // FIX CRASH: usiamo compileOnly invece di modImplementation
-    // per evitare che Loom tenti di remappare il JAR (questo causa
-    // il crash JVM su PC con poca RAM o su Windows con Loom 1.1.14).
-    // A runtime Meteor Client deve essere presente in .minecraft/mods/
-    compileOnly name: 'meteor-client-0.5.1'
+    // DEVE restare modImplementation: il JAR di release di Meteor e' mappato
+    // intermediary (class_2338, class_2596...) mentre questo sorgente usa i nomi
+    // yarn (BlockPos, Packet...). E' Loom che rimappa il JAR prima di compilare.
+    // Con compileOnly la rimappatura non avviene e la build fallisce con
+    // "cannot access class_XXXX" / "incompatible types: class_XXXX".
+    modImplementation name: 'meteor-client-0.5.1'
 }
 
 processResources {
