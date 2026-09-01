@@ -85,6 +85,12 @@ public class FireworkAutofarm extends Module {
         .name("auto-trova-item")
         .description("Cerca l'item nella GUI invece di fidarsi del numero di slot configurato")
         .defaultValue(true).build());
+    private final Setting<Integer> cicli = sgGeneral.add(new IntSetting.Builder()
+        .name("cicli").description("Quanti giri completi fare prima di spegnersi. 0 = all'infinito")
+        .defaultValue(0).min(0).sliderMax(50).build());
+    private final Setting<Integer> pausaTraCicli = sgGeneral.add(new IntSetting.Builder()
+        .name("pausa-tra-cicli").description("Tick di attesa fra un giro e il successivo")
+        .defaultValue(100).min(0).sliderMax(1200).build());
     private final Setting<Boolean> debugStati = sgGeneral.add(new BoolSetting.Builder()
         .name("debug-stati").description("Stampa in chat ogni passaggio di stato, per capire dove si blocca")
         .defaultValue(false).build());
@@ -236,6 +242,7 @@ public class FireworkAutofarm extends Module {
     private int guiUpdateTicks = 0;
     private int qtyClick = 0;
     private int razziPrimaDiVendere = 0;
+    private int cicliFatti = 0;
     private State lastLoggedState = null;
 
     public FireworkAutofarm() {
@@ -252,6 +259,7 @@ public class FireworkAutofarm extends Module {
         currentBreakPos = null;
         flagged = false; consecutiveFlags = 0;
         containerSig = null; guiUpdateTicks = 0; qtyClick = 0;
+        cicliFatti = 0;
         lastPos = null;
         if (mc.player != null) lastPos = mc.player.getPos();
         info("Anti-Vulcan attivo. Jitter: " + enableJitter.get() + " | Auto-shutdown: " + autoShutdown.get());
@@ -1264,8 +1272,28 @@ public class FireworkAutofarm extends Module {
                 break;
 
             case END:
-                info("=== CICLO COMPLETATO ===");
-                toggle();
+                cicliFatti++;
+
+                if (cicli.get() > 0 && cicliFatti >= cicli.get()) {
+                    info("=== FINITO: " + cicliFatti + " cicli completati ===");
+                    toggle();
+                    break;
+                }
+
+                info("=== CICLO " + cicliFatti + " COMPLETATO, riparto ===");
+
+                // Azzera solo lo stato del giro: i contatori di sicurezza
+                // restano, cosi' i flag accumulati fra un giro e l'altro
+                // portano comunque allo spegnimento.
+                glowstonePlaceIndex = 0; glowstoneBreakIndex = 0;
+                gunpowderBought = 0; sugarBought = 0;
+                glowstonePositions.clear();
+                currentBreakPos = null;
+                containerSig = null; guiUpdateTicks = 0; qtyClick = 0;
+                tickTimer = 0;
+
+                state = State.SHOP_GLOWSTONE_CMD;
+                waitTicks = getJitteredDelay(pausaTraCicli.get());
                 break;
 
             case IDLE:
