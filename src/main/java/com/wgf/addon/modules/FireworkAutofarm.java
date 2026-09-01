@@ -256,6 +256,7 @@ public class FireworkAutofarm extends Module {
     private int qtyClick = 0;
     private int razziPrimaDiVendere = 0;
     private int cicliFatti = 0;
+    private int tentativiVendita = 0;
     private State lastLoggedState = null;
 
     public FireworkAutofarm() {
@@ -272,7 +273,7 @@ public class FireworkAutofarm extends Module {
         currentBreakPos = null;
         flagged = false; consecutiveFlags = 0;
         containerSig = null; guiUpdateTicks = 0; qtyClick = 0;
-        cicliFatti = 0;
+        cicliFatti = 0; tentativiVendita = 0;
         lastPos = null;
         if (mc.player != null) lastPos = mc.player.getPos();
         info("Anti-Vulcan attivo. Jitter: " + enableJitter.get() + " | Auto-shutdown: " + autoShutdown.get());
@@ -1273,24 +1274,38 @@ public class FireworkAutofarm extends Module {
                     break;
                 }
 
-                FindItemResult razzi = InvUtils.find(Items.FIREWORK_ROCKET);
-                if (!razzi.found()) {
-                    info("Niente razzi da vendere.");
-                    state = State.END;
-                    break;
+                // Prima si cerca nella hotbar: basta cambiare slot selezionato,
+                // senza spostare niente.
+                FindItemResult razziHotbar = InvUtils.findInHotbar(Items.FIREWORK_ROCKET);
+
+                if (razziHotbar.found()) {
+                    InvUtils.swap(razziHotbar.slot(), false);
+                } else {
+                    FindItemResult razzi = InvUtils.find(Items.FIREWORK_ROCKET);
+                    if (!razzi.found()) {
+                        info("Niente razzi da vendere.");
+                        state = State.END;
+                        break;
+                    }
+
+                    // Scambio con lo slot in mano sulla schermata dell'inventario
+                    // del giocatore, che numera gli slot diversamente da un
+                    // container aperto: l'inventario principale resta 9-35 e la
+                    // hotbar diventa 36-44. Usare la numerazione sbagliata sposta
+                    // uno slot a caso, ed e' il motivo per cui una vendita poteva
+                    // partire con in mano tutt'altro.
+                    clickSlot(mc.player.playerScreenHandler, razzi.slot(),
+                        mc.player.getInventory().selectedSlot, SlotActionType.SWAP);
                 }
 
                 razziPrimaDiVendere = countItem(Items.FIREWORK_ROCKET);
-
-                // /sellall hand vende quello che si tiene in mano: senza questo
-                // passaggio si vende qualunque cosa fosse rimasta selezionata.
-                if (razzi.isHotbar()) InvUtils.swap(razzi.slot(), false);
-                else InvUtils.move().from(razzi.slot()).toHotbar(mc.player.getInventory().selectedSlot);
-
                 state = State.SELLALL_CMD;
                 waitTicks = getJitteredDelay(actionDelay.get());
                 break;
             case SELLALL_CMD:
+                if (!InvUtils.testInMainHand(Items.FIREWORK_ROCKET)) {
+                    warn("I razzi non sono finiti in mano: la vendita non venderebbe loro");
+                }
                 sendCmd(comandoVendita.get());
                 state = State.SELLALL_WAIT;
                 waitTicks = getGaussianDelay(chatDelay.get());
@@ -1299,12 +1314,21 @@ public class FireworkAutofarm extends Module {
                 int razziRimasti = countItem(Items.FIREWORK_ROCKET);
                 info("Venduti " + (razziPrimaDiVendere - razziRimasti) + " razzi, ne restano " + razziRimasti);
 
-                if (razziRimasti > 0 && razziRimasti < razziPrimaDiVendere) {
-                    // Molti shop vendono uno stack per volta: si ripete finche' cala.
-                    state = State.SELLALL_IN_MANO;
+                if (razziRimasti < razziPrimaDiVendere) {
+                    // La vendita ha funzionato: molti shop tolgono uno stack per
+                    // volta, quindi si ripete finche' il numero cala.
+                    tentativiVendita = 0;
+                    state = razziRimasti > 0 ? State.SELLALL_IN_MANO : State.END;
                     waitTicks = getJitteredDelay(actionDelay.get());
+                } else if (razziRimasti > 0 && ++tentativiVendita < 3) {
+                    // Niente venduto: puo' essere un limite di frequenza del
+                    // server, quindi si riprova con calma prima di rinunciare.
+                    warn("La vendita non ha tolto niente, riprovo (" + tentativiVendita + "/3)");
+                    state = State.SELLALL_IN_MANO;
+                    waitTicks = getGaussianDelay(chatDelay.get() * 3);
                 } else {
-                    if (razziRimasti > 0) warn("La vendita non ha tolto niente, mi fermo qui");
+                    if (razziRimasti > 0) warn("Vendita fallita dopo 3 tentativi, vado avanti");
+                    tentativiVendita = 0;
                     state = State.END;
                 }
                 break;
