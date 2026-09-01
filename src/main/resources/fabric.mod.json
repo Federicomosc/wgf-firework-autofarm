@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "wgf-firework-autofarm",
+  "version": "${version}",
+  "name": "WGF Firework Autofarm",
+  "description": "Auto firework farm con shop, glowstone, crafting e /sellall hand - Anti-Vulcan",
+  "authors": ["WGF CHEATS"],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "meteor": [
+      "com.wgf.addon.WgfAddon"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.14.0",
+    "minecraft": ">=1.19.2",
+    "meteor-client": "*"
+  }
+}

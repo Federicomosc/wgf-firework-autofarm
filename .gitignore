@@ -1,0 +1,23 @@
+# Output di build
+build/
+.gradle/
+build-log.txt
+
+# Distribuzione Gradle (la riscaricano build.sh / build.bat)
+gradle-8.5/
+gradle.zip
+
+# Meteor Client: JAR di terze parti, scaricalo tu (vedi LEGGIMI.txt)
+libs/*.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+out/
+
+# OS
+.DS_Store
+Thumbs.db

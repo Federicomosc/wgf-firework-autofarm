@@ -1,0 +1,27 @@
+============================================
+  WGF Firework Autofarm - Istruzioni Build
+============================================
+
+PASSO 1: Scarica Meteor Client 0.5.1
+--------------------------------------
+Vai su questo link e scarica il file JAR:
+https://github.com/ManInMyVan/meteor-archive/releases/tag/0.5.1
+
+Il file si chiama: meteor-client-0.5.1.jar
+
+PASSO 2: Metti il JAR nella cartella libs/
+------------------------------------------
+Copia il file scaricato dentro questa cartella:
+  wgf-addon/libs/meteor-client-0.5.1.jar
+
+PASSO 3: Lancia la build
+------------------------
+Fai doppio click su build.bat
+
+PASSO 4: Prendi il JAR
+----------------------
+Dopo BUILD SUCCESSFUL, trovi il mod in:
+  build/libs/wgf-firework-autofarm-1.0.0.jar
+
+Copialo in:
+  %appdata%\.minecraft\mods\
